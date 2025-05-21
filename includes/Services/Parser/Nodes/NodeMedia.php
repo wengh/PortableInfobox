@@ -146,6 +146,30 @@ class NodeMedia extends Node {
 		$titleObj = $title instanceof Title ? $title : $this->getImageAsTitleObject( $title );
 		$fileObj = $helper->getFile( $titleObj );
 
+		// Pretend to be an image if the file object is not found
+		if ( !isset( $fileObj ) && $titleObj instanceof Title ) {
+			$image = [
+				'url' => $titleObj->getText(),
+				'name' => $titleObj->getText(),
+				'alt' => $titleObj->getText(),
+				'caption' => $caption ?: null,
+				'isImage' => true,
+				'isVideo' => false,
+				'isAudio' => false,
+				'source' => $this->getPrimarySource(),
+				'item-name' => $this->getItemName(),
+				'htmlAfter' => $this->getExternalParser()->addImage( $titleObj ),
+			];
+
+			$image = array_merge( $image, $helper->extendImageData(
+				$fileObj,
+				PortableInfoboxRenderService::DEFAULT_DESKTOP_THUMBNAIL_WIDTH,
+				PortableInfoboxRenderService::DEFAULT_DESKTOP_INFOBOX_WIDTH
+			) );
+
+			return $image;
+		}
+
 		if ( !isset( $fileObj ) || !$this->isTypeAllowed( $fileObj->getMediaType() ) ) {
 			return [];
 		}
